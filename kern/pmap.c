@@ -172,6 +172,7 @@ mem_init(void)
 	//      (ie. perm = PTE_U | PTE_P)
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
+	
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
@@ -376,6 +377,24 @@ int
 page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 {
 	// Fill this function in
+	pte_t * pgTableEntry;
+	pgTableEntry = pgdir_walk(pgdir,va, 1);
+	if (!pgTableEntry) return -E_NO_MEM;
+	physaddr_t pagePA = page2pa(pp);
+	
+
+	if (*pgTableEntry & PTE_P) {
+		if (pagePA == PTE_ADDR(*pgTableEntry)) {
+			*pgTableEntry = pagePA | PTE_P | perm;
+			return 0;
+		} else {
+			tlb_invalidate(pgdir, va);
+			page_remove(pgdir, va);
+		}	
+		
+	}
+	pp -> pp_ref++;
+	*pgTableEntry = pagePA | PTE_P | perm;
 	return 0;
 }
 
@@ -394,7 +413,13 @@ struct PageInfo *
 page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 {
 	// Fill this function in
-	return NULL;
+	//return NULL;
+	pte_t *entry = pgdir_walk(pgdir, va, 1);
+	if (!entry) return NULL;
+	if (pte_store) *pte_store = entry;
+
+	return (struct PageInfo *)pa2page(PTE_ADDR(*entry));
+	
 }
 
 //
@@ -416,6 +441,13 @@ void
 page_remove(pde_t *pgdir, void *va)
 {
 	// Fill this function in
+	pte_t *entry;
+	struct PageInfo *p = page_lookup(pgdir, va, &entry);
+	if (!p || !(*entry & PTE_P)) return;
+	page_decref(p);
+	*entry = 0;
+	tlb_invalidate(pgdir, va);	
+
 }
 
 //
