@@ -268,6 +268,15 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
+	for (int i = 0; i < NCPU; i++) {
+		boot_map_region(kern_pgdir, 
+		KSTACKTOP - KSTKSIZE - i * (KSTKSIZE + KSTKGAP), 
+		KSTKSIZE, 
+		PADDR(percpu_kstacks[i]),
+		PTE_W);
+		
+	}
+	
 
 }
 
@@ -321,6 +330,9 @@ page_init(void)
 			pages[i].pp_ref = 1;
 			pages[i].pp_link = NULL;
 		} else if (i >= io_hole_start_page && i < kernel_end_page) {
+			pages[i].pp_ref = 1;
+			pages[i].pp_link = NULL;
+		} else if (i == MPENTRY_PADDR / PGSIZE) {
 			pages[i].pp_ref = 1;
 			pages[i].pp_link = NULL;
 		} else {
@@ -533,7 +545,7 @@ page_lookup(pde_t *pgdir, void *va, pte_t **pte_store)
 	if (!(*pte) & PTE_P) {
 		return NULL;
 	}
-	physaddr_t pa = PTE_ADDR(*pte);					//va对应的物理
+	physaddr_t pa = PTE_ADDR(*pte);					//va对应的物理地址
 	pp = pa2page(pa);								//物理地址对应的PageInfo结构地址
 	if (pte_store != NULL) {
 		*pte_store = pte;
@@ -615,7 +627,18 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+	//panic("mmio_map_region not implemented");
+	physaddr_t pa_start = ROUNDDOWN(pa, PGSIZE);
+	physaddr_t pa_end = ROUNDUP(pa + size, PGSIZE);
+	if (pa_end - pa_start >= MMIOLIM - MMIOBASE) {
+		panic("mmio_map_region: requesting size too large.\n");
+	}
+	size = pa_end - pa_start;
+	boot_map_region(kern_pgdir, base, size, pa_start, PTE_W|PTE_PCD|PTE_PWT);
+	void * ret = (void *)base;
+	base += size;
+	return ret;
+
 }
 
 static uintptr_t user_mem_check_addr;
