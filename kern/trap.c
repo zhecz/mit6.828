@@ -25,22 +25,6 @@ struct Pseudodesc idt_pd = {
 	sizeof(idt) - 1, (uint32_t) idt
 };
 
-void th0();
-void th1();
-void th3();
-void th4();
-void th5();
-void th6();
-void th7();
-void th8();
-void th9();
-void th10();
-void th11();
-void th12();
-void th13();
-void th14();
-void th16();
-void th_syscall();
 
 
 static const char *trapname(int trapno)
@@ -82,22 +66,46 @@ trap_init(void)
 	extern struct Segdesc gdt[];
 
 	// LAB 3: Your code here.
+	void t_divide();
+    void t_debug();
+    void t_nmi();
+    void t_brkpt();
+    void t_oflow();
+    void t_bound();
+    void t_illop();
+    void t_device();
+    void t_dblflt();
+    void t_tss();
+    void t_segnp();
+    void t_stack();
+    void t_gpflt();
+    void t_pgflt();
+    void t_fperr();
+    void t_align();
+    void t_mchk();
+    void t_simderr();
+	void th_syscall();
+
 	
-	SETGATE(idt[0], 0, GD_KT, th0, 0);		//格式如下：SETGATE(gate, istrap, sel, off, dpl)，定义在inc/mmu.h中
-	SETGATE(idt[1], 0, GD_KT, th1, 0);      //设置idt[1]，段选择子为内核代码段，段内偏移为th1
-	SETGATE(idt[3], 0, GD_KT, th3, 3);
-	SETGATE(idt[4], 0, GD_KT, th4, 0);
-	SETGATE(idt[5], 0, GD_KT, th5, 0);
-	SETGATE(idt[6], 0, GD_KT, th6, 0);
-	SETGATE(idt[7], 0, GD_KT, th7, 0);
-	SETGATE(idt[8], 0, GD_KT, th8, 0);
-	SETGATE(idt[9], 0, GD_KT, th9, 0);
-	SETGATE(idt[10], 0, GD_KT, th10, 0);
-	SETGATE(idt[11], 0, GD_KT, th11, 0);
-	SETGATE(idt[12], 0, GD_KT, th12, 0);
-	SETGATE(idt[13], 0, GD_KT, th13, 0);
-	SETGATE(idt[14], 0, GD_KT, th14, 0);
-	SETGATE(idt[16], 0, GD_KT, th16, 0);
+	
+	SETGATE(idt[T_DIVIDE], 0, GD_KT, t_divide, 0);   //格式如下：SETGATE(gate, istrap, sel, off, dpl)，定义在inc/mmu.h中
+    SETGATE(idt[T_DEBUG], 0, GD_KT, t_debug, 0);     //设置idt[1]，段选择子为内核代码段，段内偏移为th1
+    SETGATE(idt[T_NMI], 0, GD_KT, t_nmi, 0);
+    SETGATE(idt[T_BRKPT], 0, GD_KT, t_brkpt, 3);    // USER PRIVILEGE
+    SETGATE(idt[T_OFLOW], 0, GD_KT, t_oflow, 0);
+    SETGATE(idt[T_BOUND], 0, GD_KT, t_bound, 0);
+    SETGATE(idt[T_ILLOP], 0, GD_KT, t_illop, 0);
+    SETGATE(idt[T_DEVICE], 0, GD_KT, t_device, 0);
+    SETGATE(idt[T_DBLFLT], 0, GD_KT, t_dblflt, 0);
+    SETGATE(idt[T_TSS], 0, GD_KT, t_tss, 0);
+    SETGATE(idt[T_SEGNP], 0, GD_KT, t_segnp, 0);
+    SETGATE(idt[T_STACK], 0, GD_KT, t_stack, 0);
+    SETGATE(idt[T_GPFLT], 0, GD_KT, t_gpflt, 0);
+    SETGATE(idt[T_PGFLT], 0, GD_KT, t_pgflt, 0);
+    SETGATE(idt[T_FPERR], 0, GD_KT, t_fperr, 0);
+    SETGATE(idt[T_ALIGN], 0, GD_KT, t_align, 0);
+    SETGATE(idt[T_MCHK], 0, GD_KT, t_mchk, 0);
+    SETGATE(idt[T_SIMDERR], 0, GD_KT, t_simderr, 0);
 
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, th_syscall, 3);
 
@@ -189,7 +197,7 @@ trap_dispatch(struct Trapframe *tf)
 		return;
 	}
 
-	if(tf->tf_trapno == T_SYSCALL) {
+	if(tf->tf_trapno == T_SYSCALL) {  // 注意eax中传入的是系统调用号，别和tf->trapno搞混了，那是中断号
 		tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx,
 		tf->tf_regs.reg_ecx, tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi,
 		tf->tf_regs.reg_esi);

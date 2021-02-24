@@ -287,8 +287,10 @@ region_alloc(struct Env *e, void *va, size_t len)
 	//   (Watch out for corner-cases!)
 	uintptr_t start = ROUNDDOWN((uintptr_t)va, PGSIZE);
 	uintptr_t end = (void *)ROUNDUP((uintptr_t)(va + len), PGSIZE);
+	if (end >= UTOP)
+        panic("region_alloc: cannot alloc memory above UTOP\n");
 	struct PageInfo *p = NULL;	
-	int perms = PTE_U | PTE_W | PTE_P;
+	int perms = PTE_U | PTE_W;
 	while (start < end)
 	{
 		p = page_alloc(0);
