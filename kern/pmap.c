@@ -628,6 +628,7 @@ mmio_map_region(physaddr_t pa, size_t size)
 	//
 	// Your code here:
 	//panic("mmio_map_region not implemented");
+	
 	physaddr_t pa_start = ROUNDDOWN(pa, PGSIZE);
 	physaddr_t pa_end = ROUNDUP(pa + size, PGSIZE);
 	if (pa_end - pa_start >= MMIOLIM - MMIOBASE) {

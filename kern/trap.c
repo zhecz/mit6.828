@@ -420,14 +420,17 @@ page_fault_handler(struct Trapframe *tf)
 		}
 		
 		user_mem_assert(curenv, utf, sizeof(struct UTrapframe), PTE_U | PTE_W);
+
 		//fault info
 		utf->utf_fault_va = fault_va;
 		utf->utf_err = tf->tf_err;
+
 		//return states
 		utf->utf_regs = tf->tf_regs;
 		utf->utf_eip = tf->tf_eip;
 		utf->utf_eflags = tf->tf_eflags;
 		utf->utf_esp = tf->tf_esp;
+		
 		//new env run
 		tf->tf_eip = (uintptr_t)curenv->env_pgfault_upcall;
 		tf->tf_esp = (uintptr_t)utf;
