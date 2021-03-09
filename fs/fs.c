@@ -209,6 +209,7 @@ file_get_block(struct File *f, uint32_t filebno, char **blk)
 //
 // Returns 0 and sets *file on success, < 0 on error.  Errors are:
 //	-E_NOT_FOUND if the file is not found
+//这里要注意的是，File structure中，无论file还是directory的size都是一样的
 static int
 dir_lookup(struct File *dir, const char *name, struct File **file)
 {

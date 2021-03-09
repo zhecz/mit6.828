@@ -249,7 +249,7 @@ serve_write(envid_t envid, struct Fsreq_write *req)
 		return r;
 	}
 	req_n = req->req_n > PGSIZE ? PGSIZE: req->req_n;
-	if (r = file_write(o->o_file, ret->ret_buf, req_n, o->o_fd->fd_offset) < 0) {
+	if (r = file_write(o->o_file, req->req_buf, req_n, o->o_fd->fd_offset) < 0) {
 		return r;
 	}
 	o->o_fd->fd_offset += r;
